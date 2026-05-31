@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ForwardJuntos · Dagstart</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --deep:    #0A1628;
+    --mid:     #112240;
+    --panel:   #162E4D;
+    --teal:    #1ABFA0;
+    --teal2:   #0D8C74;
+    --blue:    #2E7DD4;
+    --gold:    #F0A500;
+    --text:    #E8F0F8;
+    --muted:   #6B8CAE;
+    --done:    #1ABFA033;
+    --radius:  10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--deep);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background grid ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(30,100,160,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30,100,160,.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    gap: 16px;
+  }
+  .logo {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .logo-main {
+    font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo-main span { color: var(--teal); }
+  .logo-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted); letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .date-block {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--muted);
+    text-align: right; line-height: 1.7;
+  }
+  .date-block strong { color: var(--teal); font-size: 13px; display: block; }
+
+  /* ── Energy check ── */
+  .energy-card {
+    background: var(--mid);
+    border: 1px solid rgba(26,191,160,.2);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 28px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .energy-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; color: var(--muted);
+    text-transform: uppercase; white-space: nowrap;
+  }
+  .energy-dots {
+    display: flex; gap: 10px; flex: 1;
+  }
+  .energy-dot {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 2px solid var(--panel);
+    cursor: pointer; transition: all .2s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; position: relative;
+  }
+  .energy-dot:hover { transform: scale(1.1); }
+  .energy-dot[data-level="1"] { background: rgba(240,165,0,.15); border-color: var(--gold); }
+  .energy-dot[data-level="2"] { background: rgba(46,125,212,.15); border-color: var(--blue); }
+  .energy-dot[data-level="3"] { background: rgba(26,191,160,.15); border-color: var(--teal); }
+  .energy-dot.active[data-level="1"] { background: var(--gold); box-shadow: 0 0 16px var(--gold); }
+  .energy-dot.active[data-level="2"] { background: var(--blue); box-shadow: 0 0 16px var(--blue); }
+  .energy-dot.active[data-level="3"] { background: var(--teal); box-shadow: 0 0 16px var(--teal); }
+  .energy-hint {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    min-width: 130px; transition: color .3s;
+  }
+  .energy-hint.lit { color: var(--teal); }
+
+  /* ── Phase header ── */
+  .phase-header {
+    display: flex; align-items: center; gap: 12px;
+    margin: 24px 0 10px;
+  }
+  .phase-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--teal); color: var(--deep);
+    font-weight: 800; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .phase-title {
+    font-size: 13px; font-weight: 700; letter-spacing: .5px;
+    color: var(--teal); text-transform: uppercase;
+  }
+  .phase-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* ── Step card ── */
+  .step {
+    background: var(--mid);
+    border: 1px solid rgba(255,255,255,.06);
+    border-left: 3px solid var(--panel);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all .25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .step::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--teal), var(--blue));
+    opacity: 0; transition: opacity .25s;
+  }
+  .step:hover { border-color: rgba(26,191,160,.3); transform: translateX(3px); }
+  .step:hover::before { opacity: 1; }
+  .step.done {
+    background: var(--done);
+    border-left-color: var(--teal2);
+    opacity: .75;
+  }
+  .step.done::before { opacity: 1; }
+  .step.skipped { opacity: .35; }
+
+  .step-top {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .step-check {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all .2s; font-size: 11px;
+  }
+  .step.done .step-check {
+    background: var(--teal); border-color: var(--teal); color: var(--deep);
+  }
+  .step-name {
+    font-size: 14px; font-weight: 600; flex: 1;
+  }
+  .step-duration {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted);
+    background: rgba(255,255,255,.05);
+    padding: 2px 7px; border-radius: 20px;
+  }
+
+  .step-detail {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--muted);
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,.05);
+    line-height: 1.6; display: none;
+  }
+  .step.open .step-detail { display: block; }
+
+  .step-repos {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px;
+  }
+  .repo-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: var(--teal);
+    background: rgba(26,191,160,.1);
+    border: 1px solid rgba(26,191,160,.2);
+    padding: 2px 8px; border-radius: 20px;
+    text-decoration: none; transition: background .2s;
+  }
+  .repo-tag:hover { background: rgba(26,191,160,.25); }
+
+  /* ── Day selector ── */
+  .day-row {
+    display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .day-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 1px;
+    padding: 6px 12px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.1);
+    background: transparent; color: var(--muted);
+    cursor: pointer; transition: all .2s; text-transform: uppercase;
+  }
+  .day-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .day-btn.active {
+    background: var(--teal); color: var(--deep);
+    border-color: var(--teal); font-weight: 700;
+  }
+
+  /* ── Focus repo block ── */
+  .focus-block {
+    background: linear-gradient(135deg, rgba(26,191,160,.12), rgba(46,125,212,.08));
+    border: 1px solid rgba(26,191,160,.25);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .focus-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; letter-spacing: 2px; color: var(--teal);
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .focus-repos {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    background: rgba(255,255,255,.05);
+    border-radius: 20px; height: 4px;
+    margin-bottom: 28px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; border-radius: 20px;
+    background: linear-gradient(90deg, var(--teal), var(--blue));
+    transition: width .5s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+
+  /* ── Reset button ── */
+  .reset-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 1px;
+    padding: 8px 16px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.1);
+    background: transparent; color: var(--muted);
+    cursor: pointer; transition: all .2s;
+    display: block; margin: 20px auto 0;
+    text-transform: uppercase;
+  }
+  .reset-btn:hover { border-color: var(--muted); color: var(--text); }
+
+  /* ── Motivational footer ── */
+  .tagline {
+    text-align: center; margin-top: 32px;
+    font-size: 12px; color: var(--muted);
+    font-style: italic; letter-spacing: .5px;
+  }
+  .tagline span { color: var(--teal); }
+
+  /* ── Section divider ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(26,191,160,.3), transparent);
+    margin: 8px 0 20px;
+  }
+
+  /* ── Locked overlay for low energy ── */
+  .step.locked {
+    opacity: .25; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-main">Forward<span>Juntos</span></div>
+      <div class="logo-sub">Dagstart · Werkflow</div>
+    </div>
+    <div class="date-block">
+      <strong id="today-date"></strong>
+      <span id="today-time"></span>
+    </div>
+  </header>
+
+  <!-- Energy check -->
+  <div class="energy-card">
+    <div class="energy-label">Energie<br>vandaag</div>
+    <div class="energy-dots">
+      <div class="energy-dot" data-level="1" title="Rustige dag">🌤</div>
+      <div class="energy-dot" data-level="2" title="Normale dag">⚡</div>
+      <div class="energy-dot" data-level="3" title="Scherpe dag">🔥</div>
+    </div>
+    <div class="energy-hint" id="energy-hint">Kies je niveau →</div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+
+  <!-- Day selector -->
+  <div class="day-row" id="day-row">
+    <button class="day-btn active" data-day="ma">Ma</button>
+    <button class="day-btn" data-day="di">Di</button>
+    <button class="day-btn" data-day="wo">Wo</button>
+    <button class="day-btn" data-day="do">Do</button>
+    <button class="day-btn" data-day="vr">Vr</button>
+  </div>
+
+  <!-- Focus repos for today -->
+  <div class="focus-block">
+    <div class="focus-label">▸ Focus repos vandaag</div>
+    <div class="focus-repos" id="focus-repos"></div>
+  </div>
+
+  <!-- Steps -->
+  <div id="steps-container"></div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ Reset dag</button>
+
+  <p class="tagline">"Vooruit, samen — <span>Forward Juntos</span>"</p>
+</div>
+
+<script>
+// ── Data ─────────────────────────────────────────────────────────────────────
+const DAYS = {
+  ma: { label: "Maandag", theme: "Technisch bouwen",
+    repos: ["ForwardJuntos_Dashboard","forwardjuntos-zenuwkaart","ForwardJuntos_Wireframe2.0","ForwardJuntos_Claude_OnoFramework"] },
+  di: { label: "Dinsdag", theme: "Inhoud & wetenschap",
+    repos: ["ForwardJuntos_Instructieplanning_2.0","Hiaten_rapport_ForwardJuntos","Quantum_ForwardJuntos","ms-face-generator"] },
+  wo: { label: "Woensdag", theme: "Technisch bouwen",
+    repos: ["ForwardJuntos_Dashboard","forwardjuntos-zenuwkaart","ForwardJuntos_Wireframe2.0","health-simulator"] },
+  do: { label: "Donderdag", theme: "Inhoud & wetenschap",
+    repos: ["ForwardJuntos_Instructieplanning_2.0","Hiaten_rapport_ForwardJuntos","ForwardJuntos-gesproken-introductietekst","ForwardJuntos_deel-document-anna"] },
+  vr: { label: "Vrijdag", theme: "Strategie & kader",
+    repos: ["Kader-2026-2028","ForwardTech_Radar","ForwardJuntos_filosofisch-menselijk-kader-v2","fj-agenda"] },
+};
+
+const STEPS = [
+  {
+    id: "s1", phase: 1, phaseName: "Oriëntatie", phaseTime: "5 min · minst leuk",
+    name: "Open Dashboard & Agenda",
+    duration: "5 min",
+    detail: "Open ForwardJuntos_Dashboard als eerste tab. Scan: waar was ik gisteren? Open daarna fj-agenda. Beantwoord de 3 vragen hieronder — niet meer.",
+    questions: ["Wat is het ÉÉN ding dat ForwardJuntos vandaag verder brengt?", "Wat kan wachten?", "Energie: 1 / 2 / 3?"],
+    repos: ["ForwardJuntos_Dashboard", "fj-agenda"],
+    minEnergy: 1,
+  },
+  {
+    id: "s2", phase: 1, phaseName: null,
+    name: "Mail & notificaties clearen",
+    duration: "10 min",
+    detail: "Éénmalig mail openen, wegwerken of archiveren. Daarna mail DICHT tot de middag. GitHub notificaties scannen — alleen urgent oppakken.",
+    repos: [],
+    minEnergy: 1,
+  },
+  {
+    id: "s3", phase: 2, phaseName: "Deep work", phaseTime: "60–90 min · beste energie",
+    name: "Focusblok — repo van de dag",
+    duration: "60–90 min",
+    detail: "Dit is jouw gouden venster. Telefoon weg. Geen tabs buiten de focusrepo's. Werk aan de repos hierboven geselecteerd voor vandaag. Stop bij het eerste teken van vermoeidheid.",
+    repos: [], // filled dynamically
+    minEnergy: 2,
+    dynamic: true,
+  },
+  {
+    id: "s4", phase: 3, phaseName: "Brug", phaseTime: "30 min · leuk",
+    name: "Communicatie & documenten",
+    duration: "30 min",
+    detail: "Hier komen de lichtere maar zichtbare taken: documenten voor Anna, gesproken introductietekst, deel-document updates. Bouwt voort op het focusblok.",
+    repos: ["ForwardJuntos_deel-document-anna","ForwardJuntos-gesproken-introductietekst","ms-face-generator"],
+    minEnergy: 1,
+  },
+  {
+    id: "s5", phase: 4, phaseName: "Beloning", phaseTime: "vrij · als energie het toelaat",
+    name: "Nevenprojecten & exploratie",
+    duration: "vrij",
+    detail: "Als je hier aankomt: het was een goede dag. Ventoux_research, Financieel-Kompas, Casaoasisgalapagos — of gewoon iets nieuws verkennen. Geen druk.",
+    repos: ["Ventoux_research","Financieel-Kompas","Casaoasisgalapagos","ForwardJuntos_forwardjuntos-prep"],
+    minEnergy: 3,
+  },
+];
+
+const BASE_URL = "https://github.com/UniqueEcuador/";
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let state = {
+  energy: 0,
+  day: "ma",
+  done: {},
+  open: {},
+};
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function init() {
+  // Set today's day automatically
+  const days = ["zo","ma","di","wo","do","vr","za"];
+  const todayIdx = new Date().getDay();
+  const todayKey = days[todayIdx];
+  if (DAYS[todayKey]) state.day = todayKey;
+
+  updateClock();
+  setInterval(updateClock, 1000);
+  renderDayButtons();
+  renderFocusRepos();
+  renderSteps();
+  bindEnergy();
+  bindDays();
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById("today-date").textContent =
+    now.toLocaleDateString("nl-NL", { weekday:"long", day:"numeric", month:"long" });
+  document.getElementById("today-time").textContent =
+    now.toLocaleTimeString("nl-NL", { hour:"2-digit", minute:"2-digit" });
+}
+
+// ── Energy ────────────────────────────────────────────────────────────────────
+function bindEnergy() {
+  document.querySelectorAll(".energy-dot").forEach(dot => {
+    dot.addEventListener("click", () => {
+      state.energy = parseInt(dot.dataset.level);
+      document.querySelectorAll(".energy-dot").forEach(d => d.classList.remove("active"));
+      dot.classList.add("active");
+      const hints = {
+        1: "Rustig schema — stap 1 & 2",
+        2: "Normaal schema — volledige dag",
+        3: "Volle kracht — alles beschikbaar",
+      };
+      const hint = document.getElementById("energy-hint");
+      hint.textContent = hints[state.energy];
+      hint.classList.add("lit");
+      renderSteps();
+    });
+  });
+}
+
+// ── Days ──────────────────────────────────────────────────────────────────────
+function bindDays() {
+  document.querySelectorAll(".day-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.day = btn.dataset.day;
+      state.done = {}; state.open = {};
+      document.querySelectorAll(".day-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderFocusRepos();
+      renderSteps();
+    });
+  });
+}
+
+function renderDayButtons() {
+  document.querySelectorAll(".day-btn").forEach(btn => {
+    if (btn.dataset.day === state.day) btn.classList.add("active");
+    else btn.classList.remove("active");
+  });
+}
+
+function renderFocusRepos() {
+  const day = DAYS[state.day];
+  const container = document.getElementById("focus-repos");
+  container.innerHTML = day.repos.map(r =>
+    `<a class="repo-tag" href="${BASE_URL}${r}" target="_blank">${r}</a>`
+  ).join("");
+}
+
+// ── Steps ─────────────────────────────────────────────────────────────────────
+function renderSteps() {
+  const container = document.getElementById("steps-container");
+  container.innerHTML = "";
+  let lastPhase = null;
+
+  STEPS.forEach((step, i) => {
+    // Phase header
+    if (step.phaseName && step.phase !== lastPhase) {
+      const ph = document.createElement("div");
+      ph.className = "phase-header";
+      ph.innerHTML = `
+        <div class="phase-num">${step.phase}</div>
+        <div class="phase-title">${step.phaseName}</div>
+        <div class="phase-time">${step.phaseTime || ""}</div>
+      `;
+      container.appendChild(ph);
+      if (lastPhase !== null) {
+        const div = document.createElement("div");
+        div.className = "divider";
+        container.insertBefore(div, ph);
+      }
+      lastPhase = step.phase;
+    }
+
+    // Repos: dynamic = use today's focus repos
+    const repos = step.dynamic ? DAYS[state.day].repos : step.repos;
+
+    const el = document.createElement("div");
+    el.className = "step" +
+      (state.done[step.id] ? " done" : "") +
+      (state.open[step.id] ? " open" : "") +
+      (state.energy > 0 && step.minEnergy > state.energy ? " locked" : "");
+    el.dataset.id = step.id;
+
+    const repoTags = repos.map(r =>
+      `<a class="repo-tag" href="${BASE_URL}${r}" target="_blank">${r}</a>`
+    ).join("");
+
+    const qs = (step.questions || []).map(q =>
+      `<div style="margin-top:5px;color:#E8F0F8;">→ ${q}</div>`
+    ).join("");
+
+    el.innerHTML = `
+      <div class="step-top">
+        <div class="step-check">${state.done[step.id] ? "✓" : ""}</div>
+        <div class="step-name">${step.name}</div>
+        <div class="step-duration">${step.duration}</div>
+      </div>
+      <div class="step-detail">
+        ${step.detail}
+        ${qs}
+        ${repos.length ? `<div class="step-repos">${repoTags}</div>` : ""}
+      </div>
+    `;
+
+    // Toggle open
+    el.addEventListener("click", (e) => {
+      if (e.target.classList.contains("repo-tag")) return;
+      if (state.done[step.id]) {
+        // click done → undone
+        state.done[step.id] = false;
+      } else if (state.open[step.id]) {
+        // click open → done
+        state.done[step.id] = true;
+        state.open[step.id] = false;
+      } else {
+        // click closed → open
+        state.open[step.id] = true;
+      }
+      renderSteps();
+      updateProgress();
+    });
+
+    container.appendChild(el);
+  });
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = STEPS.length;
+  const done = Object.values(state.done).filter(Boolean).length;
+  document.getElementById("progress-bar").style.width = `${(done/total)*100}%`;
+}
+
+function resetAll() {
+  state.done = {}; state.open = {};
+  document.querySelectorAll(".energy-dot").forEach(d => d.classList.remove("active"));
+  state.energy = 0;
+  document.getElementById("energy-hint").textContent = "Kies je niveau →";
+  document.getElementById("energy-hint").classList.remove("lit");
+  renderSteps();
+}
+
+init();
+</script>
+</body>
+</html>
